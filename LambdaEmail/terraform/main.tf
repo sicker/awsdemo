@@ -67,8 +67,31 @@ resource "aws_ses_template" "alert_template" {
   text    = "Hello {{Name}},\r\nYour favorite animal is {{FavoriteAnimal}}."
 }
 
+
+resource "aws_lambda_function" "lambda_function" {
+  filename      = "../LambdaEmail.zip"
+  function_name = "LambdaEmail"
+  role          = aws_iam_role.lambdaemail_role.arn
+  handler       = "LambdaEmail::LambdaEmail.Function::FunctionHandler"
+
+  source_code_hash = filebase64sha256("../LambdaEmail.zip")
+
+  runtime = "dotnetcore3.1"
+
+  environment {
+    variables = {
+      foo = "bar"
+    }
+  }
+
+  depends_on = [
+    aws_iam_role_policy.ses_policy,
+  ]
+}
+
 # terraform init 
 # terraform apply --auto-approve
 # terraform destroy --auto-approve
+# dotnet lambda package -o LambdaEmail.zip
 # dotnet lambda deploy-function
 # dotnet lambda invoke-function LambdaEmail --payload Test
